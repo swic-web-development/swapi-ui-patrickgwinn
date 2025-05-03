@@ -58,11 +58,17 @@ async function fetchSwapiData() {
   dispatch({ type: ACTIONS.FETCH_START })
 
   try {
-    let url = `https://swapi.tech/api/${store.category}`
+    let url
 
-    if (store.searchTerm) {
-      url += `?search=${encodeURIComponent(store.searchTerm)}`
+    // If there's a search term, use the search endpoint
+    if (store.searchTerm && store.searchTerm.trim() !== '') {
+      url = `https://swapi.tech/api/${store.category}/?name=${encodeURIComponent(store.searchTerm.trim())}`
+    } else {
+      // If no search term, get all items (limited to first page)
+      url = `https://swapi.tech/api/${store.category}`
     }
+
+    console.log('Fetching from URL:', url) // For debugging
 
     const response = await fetch(url)
 
@@ -71,6 +77,8 @@ async function fetchSwapiData() {
     }
 
     const data = await response.json()
+    console.log('API Response:', data) // For debugging
+
     dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: data })
 
     // After successful fetch, maintain focus on the input if it was active
@@ -78,6 +86,7 @@ async function fetchSwapiData() {
       setTimeout(() => searchInput.focus(), 0)
     }
   } catch (error) {
+    console.error('API Error:', error) // For debugging
     dispatch({ type: ACTIONS.FETCH_ERROR, payload: error.message })
   }
 }
@@ -171,9 +180,9 @@ function renderSearch() {
     placeholder: `Enter search term...`,
     value: store.searchTerm,
     onInput: (e) => {
-      // Update the store directly without triggering a full re-render
+      // Update the store directly
       store.searchTerm = e.target.value
-      // Only update the results section, not the entire UI
+      // Keep focus on the input
       document.querySelector('#search-input').focus()
     },
   })
@@ -214,7 +223,11 @@ function renderResults() {
 
   // Change the title based on whether a search has been performed
   if (store.data) {
-    resultsTitle.textContent = `Results for "${store.category}"`
+    if (store.searchTerm && store.searchTerm.trim() !== '') {
+      resultsTitle.textContent = `Results for "${store.searchTerm}" in ${store.category}`
+    } else {
+      resultsTitle.textContent = `All ${store.category}`
+    }
   } else {
     resultsTitle.textContent = 'Star Wars Data Explorer'
   }
@@ -265,7 +278,24 @@ function renderResults() {
     `
     resultsContent.appendChild(welcomeMessage)
   } else {
-    const results = store.data.result || store.data.results || []
+    // Get the appropriate results array based on API response structure
+    let results = []
+
+    // SWAPI Tech API can return results in different formats
+    if (store.data.result && Array.isArray(store.data.result)) {
+      results = store.data.result
+    } else if (store.data.results && Array.isArray(store.data.results)) {
+      results = store.data.results
+    } else if (
+      store.data.message === 'ok' &&
+      store.data.result &&
+      typeof store.data.result === 'object'
+    ) {
+      // Handle case for single result
+      results = [store.data.result]
+    }
+
+    console.log('Processed results:', results) // For debugging
 
     if (results.length === 0) {
       const noResults = document.createElement('div')
@@ -274,10 +304,15 @@ function renderResults() {
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="mt-2">No results found. Try a different search.</p>
+        <p class="mt-2">No results found for "${store.searchTerm}" in ${store.category}. Try a different search term.</p>
       `
       resultsContent.appendChild(noResults)
     } else {
+      const resultCount = document.createElement('div')
+      resultCount.className = 'mb-4 text-sm text-gray-600'
+      resultCount.textContent = `Found ${results.length} result${results.length === 1 ? '' : 's'}`
+      resultsContent.appendChild(resultCount)
+
       const resultsList = document.createElement('div')
       resultsList.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
 
