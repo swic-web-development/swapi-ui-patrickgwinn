@@ -61,7 +61,15 @@ export function Input(props) {
   }
 
   if (onInput && typeof onInput === 'function') {
-    input.addEventListener('input', onInput)
+    input.addEventListener('input', (e) => {
+      // Call the provided onInput handler
+      onInput(e)
+
+      // Make sure the input maintains focus
+      setTimeout(() => {
+        e.target.focus()
+      }, 0)
+    })
   }
 
   if (onChange && typeof onChange === 'function') {
