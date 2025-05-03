@@ -137,8 +137,8 @@ function renderCategories() {
     const btn = Button({
       text: category.charAt(0).toUpperCase() + category.slice(1),
       onClick: () => {
+        // Only update the category - don't trigger a search
         dispatch({ type: ACTIONS.SET_CATEGORY, payload: category })
-        fetchSwapiData()
       },
       className: store.category === category ? 'active' : '',
       variant: store.category === category ? 'primary' : 'secondary',
@@ -211,9 +211,15 @@ function renderResults() {
 
   const resultsTitle = document.createElement('h2')
   resultsTitle.className = 'text-xl font-semibold text-gray-700'
-  resultsTitle.textContent = `Results for "${store.category}"`
-  resultsHeader.appendChild(resultsTitle)
 
+  // Change the title based on whether a search has been performed
+  if (store.data) {
+    resultsTitle.textContent = `Results for "${store.category}"`
+  } else {
+    resultsTitle.textContent = 'Star Wars Data Explorer'
+  }
+
+  resultsHeader.appendChild(resultsTitle)
   resultsContainer.appendChild(resultsHeader)
 
   // Create results content
@@ -240,15 +246,29 @@ function renderResults() {
     `
     resultsContent.appendChild(errorMsg)
   } else if (!store.data) {
-    const emptyState = document.createElement('div')
-    emptyState.className = 'text-center py-12 text-gray-500'
-    emptyState.innerHTML = `
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-      <p class="mt-2">Search for Star Wars data using the controls above</p>
+    // Display a welcome message and instructions when no search has been performed
+    const welcomeMessage = document.createElement('div')
+    welcomeMessage.className = 'text-center py-12'
+    welcomeMessage.innerHTML = `
+      <div class="text-6xl text-yellow-500 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-800 mb-2">Welcome to the SWAPI Explorer</h3>
+      <p class="text-gray-600 mb-6">Search the Star Wars API to discover characters, planets, vehicles, and more!</p>
+      <div class="flex flex-col items-center space-y-4">
+        <div class="bg-gray-100 rounded-lg p-4 w-full max-w-md">
+          <h4 class="font-bold mb-2">How to search:</h4>
+          <ol class="list-decimal list-inside text-left space-y-2">
+            <li>Select a category from the buttons above</li>
+            <li>Type your search term in the search box</li>
+            <li>Press Enter or click the Search button</li>
+          </ol>
+        </div>
+      </div>
     `
-    resultsContent.appendChild(emptyState)
+    resultsContent.appendChild(welcomeMessage)
   } else {
     const results = store.data.result || store.data.results || []
 
@@ -442,8 +462,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize the UI
   renderApp()
 
-  // Initial data fetch
-  fetchSwapiData()
+  // We don't perform initial data fetch anymore
+  // The user will need to search explicitly
 
   // Handle keyboard events
   document.addEventListener('keydown', (e) => {
