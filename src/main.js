@@ -250,9 +250,9 @@ function renderResults() {
     const welcomeMessage = document.createElement('div')
     welcomeMessage.className = 'text-center py-12'
     welcomeMessage.innerHTML = `
-      <div class="text-6xl text-yellow-500 mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+      <div class="mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
       <h3 class="text-2xl font-bold text-gray-800 mb-2">Welcome to the SWAPI Explorer</h3>
