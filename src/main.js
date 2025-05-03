@@ -1,10 +1,9 @@
-import './styles.css'
 // main.js - The entry point for our SWAPI UI application with Tailwind CSS
 
 import { Button } from './components/button.js'
 import { Input } from './components/input.js'
 import { Label } from './components/label.js'
-// Removed unused import for TextArea
+import { TextArea } from './components/textarea.js'
 
 // Store for our application state
 let store = {
@@ -50,6 +49,12 @@ function dispatch(action) {
 
 // Function to fetch data from SWAPI
 async function fetchSwapiData() {
+  // Make sure the searchTerm is up to date from the input field
+  const searchInput = document.getElementById('search-input')
+  if (searchInput) {
+    store.searchTerm = searchInput.value
+  }
+
   dispatch({ type: ACTIONS.FETCH_START })
 
   try {
@@ -67,6 +72,11 @@ async function fetchSwapiData() {
 
     const data = await response.json()
     dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: data })
+
+    // After successful fetch, maintain focus on the input if it was active
+    if (searchInput && document.activeElement === searchInput) {
+      setTimeout(() => searchInput.focus(), 0)
+    }
   } catch (error) {
     dispatch({ type: ACTIONS.FETCH_ERROR, payload: error.message })
   }
@@ -102,7 +112,6 @@ function createAppStructure() {
     { id: 'details', className: 'hidden' }, // Hidden by default
   ]
 
-  // biome-ignore lint/complexity/noForEach: <explanation>
   sections.forEach(({ id, className }) => {
     const section = document.createElement('div')
     section.id = id
@@ -124,7 +133,6 @@ function renderCategories() {
   heading.innerHTML = '<h2 class="text-xl font-semibold text-gray-700">Categories</h2>'
   categoryContainer.appendChild(heading)
 
-  // biome-ignore lint/complexity/noForEach: <explanation>
   categories.forEach((category) => {
     const btn = Button({
       text: category.charAt(0).toUpperCase() + category.slice(1),
@@ -160,16 +168,28 @@ function renderSearch() {
 
   const input = Input({
     id: 'search-input',
-    placeholder: 'Enter search term...',
+    placeholder: `Enter search term...`,
     value: store.searchTerm,
-    onInput: (e) => dispatch({ type: ACTIONS.SET_SEARCH_TERM, payload: e.target.value }),
+    onInput: (e) => {
+      // Update the store directly without triggering a full re-render
+      store.searchTerm = e.target.value
+      // Only update the results section, not the entire UI
+      document.querySelector('#search-input').focus()
+    },
   })
   inputGroup.appendChild(input)
 
   // Create button
   const searchBtn = Button({
     text: 'Search',
-    onClick: fetchSwapiData,
+    onClick: () => {
+      // Update the store with the current input value
+      dispatch({
+        type: ACTIONS.SET_SEARCH_TERM,
+        payload: document.querySelector('#search-input').value,
+      })
+      fetchSwapiData()
+    },
   })
 
   // Add elements to form
@@ -246,7 +266,6 @@ function renderResults() {
       const resultsList = document.createElement('div')
       resultsList.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
 
-      // biome-ignore lint/complexity/noForEach: <explanation>
       results.forEach((item) => {
         const resultItem = document.createElement('div')
         resultItem.className = 'result-card'
@@ -396,9 +415,23 @@ async function fetchItemDetails(url) {
 
 // Main render function
 function renderApp() {
+  // Store focused element ID before rendering
+  const activeElementId = document.activeElement ? document.activeElement.id : null
+
+  // Render UI components
   renderCategories()
   renderSearch()
   renderResults()
+
+  // Restore focus if needed
+  if (activeElementId) {
+    const elementToFocus = document.getElementById(activeElementId)
+    if (elementToFocus) {
+      setTimeout(() => {
+        elementToFocus.focus()
+      }, 0)
+    }
+  }
 }
 
 // Initialize the app when DOM is loaded
@@ -412,11 +445,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial data fetch
   fetchSwapiData()
 
-  // Handle escape key for modal
+  // Handle keyboard events
   document.addEventListener('keydown', (e) => {
+    // Close modal on Escape key
     if (e.key === 'Escape') {
       const detailsContainer = document.getElementById('details')
       detailsContainer.className = 'hidden'
+    }
+
+    // Search on Enter key when search input is focused
+    if (e.key === 'Enter' && document.activeElement.id === 'search-input') {
+      // Update the store with the current input value
+      dispatch({
+        type: ACTIONS.SET_SEARCH_TERM,
+        payload: document.querySelector('#search-input').value,
+      })
+      fetchSwapiData()
+      e.preventDefault()
     }
   })
 })
