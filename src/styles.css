@@ -1,1 +1,43 @@
-@import 'tailwindcss';
+/* Import Tailwind CSS */
+@import 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
+
+/* Custom styles that extend Tailwind */
+.btn-primary {
+  @apply focus:ring-opacity-50 rounded bg-blue-500 px-4 py-2 font-medium text-white transition duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none;
+}
+
+.btn-primary.active {
+  @apply bg-blue-700 font-bold;
+}
+
+.btn-secondary {
+  @apply focus:ring-opacity-50 rounded bg-gray-200 px-4 py-2 font-medium text-gray-800 transition duration-200 hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none;
+}
+
+.result-card {
+  @apply rounded-lg border border-gray-200 bg-white p-4 shadow-md transition duration-200 hover:shadow-lg;
+}
+
+.details-modal {
+  @apply bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4;
+}
+
+.details-content {
+  @apply relative max-h-screen w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg;
+}
+
+.close-btn {
+  @apply absolute top-3 right-3 cursor-pointer text-2xl font-bold text-gray-500 hover:text-gray-700;
+}
+
+/* Ensure no stray arrows or icons appear */
+body::before,
+body::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Hide any potentially inserted content */
+body > *:not(#app) {
+  display: none !important;
+}
